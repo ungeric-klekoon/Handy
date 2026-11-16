@@ -1,7 +1,7 @@
 use crate::audio_toolkit::chunking;
 use crate::audio_toolkit::{
-    apply_custom_words, detect_output_language, normalize_transcription_output,
-    remove_filler_words, OutputLanguageEvidence,
+    apply_custom_words, convert_number_words, detect_output_language,
+    normalize_transcription_output, remove_filler_words, OutputLanguageEvidence,
 };
 use crate::chinese_script::{chinese_variety_for_text, convert_chinese_script};
 use crate::engine_supervisor::{
@@ -1695,11 +1695,13 @@ fn post_process_transcription_text(
     fail_open_text_transform(raw, |raw| {
         // Last-resort language evidence: confidence-gated detection from the
         // transcribed text itself, constrained to the model's languages. Only
-        // consulted when it can change the outcome (built-in gated fillers).
+        // consulted when it can change the outcome (built-in gated fillers,
+        // or numbers written as digits).
         let output_language = match output_language {
             OutputLanguageEvidence::Unknown
-                if settings.filler_word_removal_enabled
-                    && settings.custom_filler_words.is_none() =>
+                if (settings.filler_word_removal_enabled
+                    && settings.custom_filler_words.is_none())
+                    || settings.numbers_as_digits_enabled =>
             {
                 match detect_output_language(&raw, supported_languages) {
                     Some(language) => {
@@ -1737,7 +1739,13 @@ fn post_process_transcription_text(
             settings.filler_word_removal_enabled,
         );
 
-        let text = normalize_transcription_output(&without_fillers);
+        let with_digits = if settings.numbers_as_digits_enabled {
+            convert_number_words(&without_fillers, &output_language)
+        } else {
+            without_fillers
+        };
+
+        let text = normalize_transcription_output(&with_digits);
         // Short, wordless clips often come back as just "." or "?".
         if text.chars().any(char::is_alphanumeric) {
             text
@@ -2236,6 +2244,35 @@ mod tests {
             result,
             "so the weather forecast said it would probably rain throughout the whole weekend"
         );
+    }
+
+    #[test]
+    fn numbers_are_written_as_digits_unless_disabled() {
+        let evidence = OutputLanguageEvidence::UserSelected("fr".to_string());
+        let enabled = AppSettings::default();
+        let disabled = AppSettings {
+            numbers_as_digits_enabled: false,
+            ..Default::default()
+        };
+        let text = "il y a vingt-cinq dossiers";
+
+        let converted = post_process_transcription_text(
+            text.to_string(),
+            &enabled,
+            false,
+            &evidence,
+            &languages(&["fr"]),
+        );
+        let kept = post_process_transcription_text(
+            text.to_string(),
+            &disabled,
+            false,
+            &evidence,
+            &languages(&["fr"]),
+        );
+
+        assert_eq!(converted, "il y a 25 dossiers");
+        assert_eq!(kept, text);
     }
 
     #[test]
