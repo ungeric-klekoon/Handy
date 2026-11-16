@@ -1,0 +1,19 @@
+name: "Build Windows (forme d'onde)"
+
+# Unsigned Windows x64 build of this fork, for personal use.
+on: workflow_dispatch
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/build.yml
+    with:
+      platform: "windows-latest"
+      target: "x86_64-pc-windows-msvc"
+      build-args: ""
+      sign-binaries: false
+      asset-prefix: "handy-forme-onde"
+      upload-artifacts: true
+      is-debug-build: false
+    secrets: inherit
