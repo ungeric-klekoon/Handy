@@ -580,7 +580,11 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
         )}
       </div>
 
-      <AudioPlayer onLoadRequest={handleLoadAudio} className="w-full" />
+      <AudioPlayer
+        onLoadRequest={handleLoadAudio}
+        className="w-full"
+        showWaveform
+      />
     </div>
   );
 };
