@@ -616,6 +616,10 @@
         "title": "Supprimer les mots de remplissage",
         "description": "Supprime les hésitations courantes des transcriptions. Désactivez cette option pour les conserver."
       },
+      "numbersAsDigits": {
+        "title": "Écrire les nombres en chiffres",
+        "description": "Écrit les nombres en chiffres (vingt-cinq → 25, dix pour cent → 10 %) dans les transcriptions en français et en anglais, quel que soit le modèle. Désactivez cette option pour les garder en lettres."
+      },
       "chineseScript": {
         "title": "Écriture chinoise",
         "description": "Écrit les transcriptions en mandarin et en cantonais en caractères simplifiés, ou en caractères traditionnels tels qu'écrits à Taïwan ou à Hong Kong. Les autres langues ne sont pas modifiées.",
